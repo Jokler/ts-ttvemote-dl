@@ -239,7 +239,7 @@ impl Config {
         let buf_reader = BufReader::new(cfgfile);
 
         for v in buf_reader.lines() {
-        println!("{:?}", v);
+
             let line = v.unwrap();
             let s: Vec<&str> = line.split(":").collect();
             let data = *s.last().unwrap();

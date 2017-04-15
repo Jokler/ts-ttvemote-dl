@@ -45,12 +45,12 @@ fn main() {
         input = read("Add subscriber emotes?(Y/n) ");
         if !input.starts_with("n") {
 
+            println!("(Empty to quit)");
             loop {
                 input = read("Channel: ");
-                config.ttv_channels.push(input);
+                if input == "" { break; }
 
-                input = read("Add more subscriber emotes?(Y/n) ");
-                if input.starts_with("n") { break; }
+                config.ttv_channels.push(input);
             }
         }
 
@@ -60,12 +60,12 @@ fn main() {
         input = read("Add channel bttv emotes?(Y/n) ");
         if !input.starts_with("n") {
 
+            println!("(Empty to quit)");
             loop {
                 input = read("Channel: ");
-                config.bttv_channels.push(input);
+                if input == "" { break; }
 
-                input = read("Download more channel bttv emotes?(Y/n) ");
-                if input.starts_with("n") { break; }
+                config.bttv_channels.push(input);
             }
         }
     }
@@ -98,6 +98,10 @@ fn main() {
         }
     }
 
+    if !read("Save config?(Y/n) ").starts_with("n") {
+        config.write_to_file(&read("Path: "));
+    }
+
     if !config.bttv_channels.is_empty() {
         for channel in &config.bttv_channels {
             match bttv_emote_data.get_channel_bttv_emote(&channel) {
@@ -105,10 +109,6 @@ fn main() {
                 Err(e) => println!("Error({})", e),
             }
         }
-    }
-
-    if !read("Save config?(Y/n) ").starts_with("n") {
-        config.write_to_file(&read("Path: "));
     }
 
     if download_ttv {
