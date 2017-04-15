@@ -14,7 +14,7 @@ use hyper::net::HttpsConnector;
 use hyper_native_tls::NativeTlsClient;
 
 mod ttv;
-use ttv::{TTVEmoteData, BTTVEmoteData};
+use ttv::{TTVEmoteData, BTTVEmoteData, Config};
 
 fn main() {
 
@@ -23,6 +23,11 @@ fn main() {
     let mut download_bttv = false;
     let mut emote_data = TTVEmoteData::new();
     let mut bttv_emote_data = BTTVEmoteData::new();
+    let mut config = Config::new();
+
+    if !read("Read config?(Y/n) ").starts_with("n") {
+        config.read_from_file(&read("Path: "));
+    }
 
     match std::fs::create_dir_all("./twitchemotes/emoticons/") {
         Ok(_) => println!("Created twitchemotes directory"),
@@ -32,60 +37,78 @@ fn main() {
         }
     }
 
-    input = read("Download global emotes?(Y/n) ");
+    if !read("Edit config?(Y/n) ").starts_with("n") {
 
-    if !input.starts_with("n") {
+        input = read("Download global emotes?(Y/n) ");
+        config.global_ttv = !input.starts_with("n");
 
+        input = read("Add subscriber emotes?(Y/n) ");
+        if !input.starts_with("n") {
+
+            loop {
+                input = read("Channel: ");
+                config.ttv_channels.push(input);
+
+                input = read("Add more subscriber emotes?(Y/n) ");
+                if input.starts_with("n") { break; }
+            }
+        }
+
+        input = read("Download global bttv emotes?(Y/n) ");
+        config.global_bttv = !input.starts_with("n");
+
+        input = read("Add channel bttv emotes?(Y/n) ");
+        if !input.starts_with("n") {
+
+            loop {
+                input = read("Channel: ");
+                config.bttv_channels.push(input);
+
+                input = read("Download more channel bttv emotes?(Y/n) ");
+                if input.starts_with("n") { break; }
+            }
+        }
+    }
+
+    if config.global_ttv {
         match emote_data.get_global_emotes() {
             Ok(_) => download_ttv = true,
             Err(e) => println!("Error({})", e),
         }
     }
 
-    input = read("Download subscriber emotes?(Y/n) ");
-    if !input.starts_with("n") {
-
-        match emote_data.update_sub_emote_data() {
-            Ok(_) => {
-                loop {
-                    input = read("Channel: ");
-
-                    match emote_data.get_subscriber_emotes(&input) {
-                        Ok(_) => download_ttv = true,
-                        Err(e) => println!("Error({})", e),
-                    }
-
-                    input = read("Download more subscriber emotes?(Y/n) ");
-                    if input.starts_with("n") { break; }
-                }
-            }
-            Err(e) => println!("Error({})", e),
-        }
-    }
-
-    input = read("Download global bttv emotes?(Y/n) ");
-    if !input.starts_with("n") {
-
+    if config.global_bttv {
         match bttv_emote_data.get_global_bttv_emotes() {
             Ok(_) => download_bttv = true,
             Err(e) => println!("Error({})", e),
         }
     }
 
-    input = read("Download channel bttv emotes?(Y/n) ");
-    if !input.starts_with("n") {
+    if !config.ttv_channels.is_empty() {
+        match emote_data.update_sub_emote_data() {
+            Ok(_) => {
+                for channel in &config.ttv_channels {
+                    match emote_data.get_subscriber_emotes(&channel) {
+                        Ok(_) => download_ttv = true,
+                        Err(e) => println!("Error({})", e),
+                    }
+                }
+            },
+            Err(e) => println!("Error({})", e),
+        }
+    }
 
-        loop {
-            input = read("Channel: ");
-
-            match bttv_emote_data.get_channel_bttv_emotes(&input) {
+    if !config.bttv_channels.is_empty() {
+        for channel in &config.bttv_channels {
+            match bttv_emote_data.get_channel_bttv_emote(&channel) {
                 Ok(_) => download_bttv = true,
                 Err(e) => println!("Error({})", e),
             }
-
-            input = read("Download more channel bttv emotes?(Y/n) ");
-            if input.starts_with("n") { break; }
         }
+    }
+
+    if !read("Save config?(Y/n) ").starts_with("n") {
+        config.write_to_file(&read("Path: "));
     }
 
     if download_ttv {
@@ -93,8 +116,8 @@ fn main() {
         save_images(&emote_data.template, &mut emote_data.data);
     }
     if download_bttv {
-        println!("Downloading ttv emotes");
-        save_images(&emote_data.template, &mut emote_data.data);
+        println!("Downloading bttv emotes");
+        save_images(&bttv_emote_data.template, &mut bttv_emote_data.data);
     }
 }
 

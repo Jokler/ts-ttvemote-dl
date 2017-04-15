@@ -4,6 +4,8 @@ extern crate rustc_serialize;
 
 use std::io::*;
 use std::result::Result;
+use std::fs::File;
+use std::fs::OpenOptions;
 use self::rustc_serialize::json::Json;
 use std::collections::BTreeMap;
 
@@ -20,6 +22,13 @@ pub struct TTVEmoteData {
 pub struct BTTVEmoteData {
     pub template: String,
     pub data: Vec<(String, String)>,
+}
+
+pub struct Config {
+    pub global_ttv: bool,
+    pub global_bttv: bool,
+    pub ttv_channels: Vec<String>,
+    pub bttv_channels: Vec<String>,
 }
 
 impl TTVEmoteData {
@@ -172,7 +181,7 @@ impl BTTVEmoteData {
         Ok(())
     }
 
-    pub fn get_channel_bttv_emotes(&mut self, channel: &str) -> Result<(), String> {
+    pub fn get_channel_bttv_emote(&mut self, channel: &str) -> Result<(), String> {
 
         let obj = match download_json(&format!("https://api.betterttv.net/2/channels/{}",
                                                channel)) {
@@ -205,6 +214,81 @@ impl BTTVEmoteData {
         }
 
         Ok(())
+    }
+}
+
+impl Config {
+    pub fn new() -> Config {
+        Config {
+            global_ttv: false,
+            global_bttv: false,
+            ttv_channels: Vec::new(),
+            bttv_channels: Vec::new(),
+        }
+    }
+
+    pub fn read_from_file(&mut self, path: &str) {
+
+        let cfgfile = match OpenOptions::new().read(true).open(path) {
+            Ok(v) => v,
+            Err(e) => {
+                println!("{}", e);
+                return;
+            }
+        };
+        let buf_reader = BufReader::new(cfgfile);
+
+        for v in buf_reader.lines() {
+        println!("{:?}", v);
+            let line = v.unwrap();
+            let s: Vec<&str> = line.split(":").collect();
+            let data = *s.last().unwrap();
+
+            match *s.first().unwrap() {
+                "TTV-Global"   => self.global_ttv = data == "true",
+                "TTV-Channel"  => self.ttv_channels.push(String::from(data)),
+                "BTTV-Global"  => self.global_bttv = data == "true",
+                "BTTV-Channel" => self.bttv_channels.push(String::from(data)),
+                ""             => {},
+                _              => println!("Invalid Line!({})", *s.first().unwrap()),
+            }
+        }
+    }
+
+    pub fn write_to_file(&mut self, path: &str) {
+
+        let mut cfgfile = match OpenOptions::new().open(path) {
+            Ok(v) => v,
+            Err(_) => {
+                match File::create(path) {
+                    Ok(v) => v,
+                    Err(e) => {
+                        println!("{}", e);
+                        return;
+                    }
+                }
+            }
+        };
+
+        if let Err(e) = writeln!(cfgfile, "TTV-Global:{}", self.global_ttv.to_string()) {
+            println!("{}", e);
+        }
+
+        for channel in self.ttv_channels.clone() {
+            if let Err(e) = writeln!(cfgfile, "TTV-Channel:{}", channel) {
+                println!("{}", e);
+            }
+        }
+
+        if let Err(e) = writeln!(cfgfile, "BTTV-Global:{}", self.global_ttv.to_string()) {
+            println!("{}", e);
+        }
+
+        for channel in self.bttv_channels.clone() {
+            if let Err(e) = writeln!(cfgfile, "BTTV-Channel:{}", channel) {
+                println!("{}", e);
+            }
+        }
     }
 }
 
