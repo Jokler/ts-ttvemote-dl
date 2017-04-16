@@ -23,19 +23,17 @@ fn main() {
     let mut download_bttv = false;
     let mut emote_data = TTVEmoteData::new();
     let mut bttv_emote_data = BTTVEmoteData::new();
-    let mut config = Config::new();
 
-    if !read("Read config?(Y/n) ").starts_with("n") {
-        config.read_from_file(&read("Path: "));
-    }
-
-    match std::fs::create_dir_all("./twitchemotes/emoticons/") {
-        Ok(_) => println!("Created twitchemotes directory"),
-        Err(e) => {
-            println!("Failed to create directory: {}", e);
-            return;
-        }
-    }
+    let mut config = match std::env::args().nth(1) {
+        Some(v) => Config::new().create_from_file(&v),
+        None    => {
+            if read("Read config?(y/N) ").starts_with("y") {
+                Config::new().create_from_file(&read("Path: "))
+            } else {
+                Config::new()
+            }
+        },
+    };
 
     let edit_config = !read("Edit config?(Y/n) ").starts_with("n");
     if edit_config {
@@ -43,31 +41,35 @@ fn main() {
         input = read("Download global emotes?(Y/n) ");
         config.global_ttv = !input.starts_with("n");
 
-        input = read("Add subscriber emotes?(Y/n) ");
-        if !input.starts_with("n") {
+        println!("Add subscriber emotes?(Empty to quit)");
+        loop {
+            input = read("Channel: ");
+            if input == "" { break; }
 
-            println!("(Empty to quit)");
-            loop {
-                input = read("Channel: ");
-                if input == "" { break; }
-
-                config.ttv_channels.push(input);
-            }
+            config.ttv_channels.push(input);
         }
 
         input = read("Download global bttv emotes?(Y/n) ");
         config.global_bttv = !input.starts_with("n");
 
-        input = read("Add channel bttv emotes?(Y/n) ");
-        if !input.starts_with("n") {
+        println!("Add channel bttv emotes?(Empty to quit)");
+        loop {
+            input = read("Channel: ");
+            if input == "" { break; }
 
-            println!("(Empty to quit)");
-            loop {
-                input = read("Channel: ");
-                if input == "" { break; }
+            config.bttv_channels.push(input);
+        }
+    }
 
-                config.bttv_channels.push(input);
-            }
+    if edit_config && !read("Save config?(Y/n) ").starts_with("n") {
+        config.write_to_file(&read("Path: "));
+    }
+
+    match std::fs::create_dir_all("./twitchemotes/emoticons/") {
+        Ok(_) => println!("Created twitchemotes directory"),
+        Err(e) => {
+            println!("Failed to create directory: {}", e);
+            return;
         }
     }
 
@@ -97,10 +99,6 @@ fn main() {
             },
             Err(e) => println!("Error({})", e),
         }
-    }
-
-    if edit_config && !read("Save config?(Y/n) ").starts_with("n") {
-        config.write_to_file(&read("Path: "));
     }
 
     if !config.bttv_channels.is_empty() {

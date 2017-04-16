@@ -1,6 +1,6 @@
 [package]
 name = "ts-ttvemote-dl"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["Jokler <jokler.contact@gmail.com>"]
 
 [dependencies]

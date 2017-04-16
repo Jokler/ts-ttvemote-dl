@@ -73,7 +73,7 @@ impl TTVEmoteData {
 
     pub fn update_sub_emote_data(&mut self) -> Result<(), String> {
 
-        println!("Downloading sub emote data");
+        println!("Downloading subscriber emote data");
         let obj = match download_json("https://twitchemotes.com/api_cache/v2/subscriber.json") {
             Ok(v) => v,
             Err(e) => return Err(e),
@@ -227,13 +227,13 @@ impl Config {
         }
     }
 
-    pub fn read_from_file(&mut self, path: &str) {
+    pub fn create_from_file(mut self, path: &str) -> Config {
 
         let cfgfile = match OpenOptions::new().read(true).open(path) {
             Ok(v) => v,
             Err(e) => {
                 println!("{}", e);
-                return;
+                return self;
             }
         };
         let buf_reader = BufReader::new(cfgfile);
@@ -253,6 +253,7 @@ impl Config {
                 _              => println!("Invalid Line!({})", *s.first().unwrap()),
             }
         }
+        self
     }
 
     pub fn write_to_file(&mut self, path: &str) {
