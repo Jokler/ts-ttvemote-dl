@@ -37,7 +37,8 @@ fn main() {
         }
     }
 
-    if !read("Edit config?(Y/n) ").starts_with("n") {
+    let edit_config = !read("Edit config?(Y/n) ").starts_with("n");
+    if edit_config {
 
         input = read("Download global emotes?(Y/n) ");
         config.global_ttv = !input.starts_with("n");
@@ -98,13 +99,13 @@ fn main() {
         }
     }
 
-    if !read("Save config?(Y/n) ").starts_with("n") {
+    if edit_config && !read("Save config?(Y/n) ").starts_with("n") {
         config.write_to_file(&read("Path: "));
     }
 
     if !config.bttv_channels.is_empty() {
         for channel in &config.bttv_channels {
-            match bttv_emote_data.get_channel_bttv_emote(&channel) {
+            match bttv_emote_data.get_channel_bttv_emotes(&channel) {
                 Ok(_) => download_bttv = true,
                 Err(e) => println!("Error({})", e),
             }

@@ -73,7 +73,7 @@ impl TTVEmoteData {
 
     pub fn update_sub_emote_data(&mut self) -> Result<(), String> {
 
-        println!("Downloading data");
+        println!("Downloading sub emote data");
         let obj = match download_json("https://twitchemotes.com/api_cache/v2/subscriber.json") {
             Ok(v) => v,
             Err(e) => return Err(e),
@@ -181,7 +181,7 @@ impl BTTVEmoteData {
         Ok(())
     }
 
-    pub fn get_channel_bttv_emote(&mut self, channel: &str) -> Result<(), String> {
+    pub fn get_channel_bttv_emotes(&mut self, channel: &str) -> Result<(), String> {
 
         let obj = match download_json(&format!("https://api.betterttv.net/2/channels/{}",
                                                channel)) {
