@@ -1,4 +1,4 @@
-# ts-ttvemote-dl
+# ts-ttvemote-dl [![Build Status](https://travis-ci.org/Jokler/ts-ttvemote-dl.svg?branch=master)](https://travis-ci.org/Jokler/ts-ttvemote-dl)
 This program lets you download global and channel ttv and bttv emotes.  
 It also tries to make adding them to TeamSpeak 3 as simple as possible.
 
