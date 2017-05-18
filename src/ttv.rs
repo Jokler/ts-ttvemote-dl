@@ -309,6 +309,10 @@ fn download_json(url: &str) -> Result<BTreeMap<String, Json>, String> {
         return Err(format!("{}", e));
     }
 
+    if s.is_empty() {
+        return Err(format!("Response from {} was empty", url));
+    }
+
     let data = Json::from_str(&s).unwrap();
     let obj = data.as_object().unwrap();
 
