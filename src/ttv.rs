@@ -1,13 +1,12 @@
 extern crate hyper;
 extern crate hyper_native_tls;
-extern crate rustc_serialize;
+extern crate serde_json;
 
 use std::io::*;
 use std::result::Result;
 use std::fs::File;
 use std::fs::OpenOptions;
-use self::rustc_serialize::json::Json;
-use std::collections::BTreeMap;
+use self::serde_json::Value;
 
 use hyper::Client;
 use hyper::net::HttpsConnector;
@@ -16,7 +15,7 @@ use hyper_native_tls::NativeTlsClient;
 pub struct TTVEmoteData {
     pub template: String,
     pub data: Vec<(String, String)>,
-    sub_emotes: Option<Json>,
+    sub_emotes: Option<Value>,
 }
 
 pub struct BTTVEmoteData {
@@ -51,7 +50,7 @@ impl TTVEmoteData {
         self.template = templates
             .get("small")
             .unwrap()
-            .as_string()
+            .as_str()
             .unwrap()
             .to_owned();
 
@@ -84,7 +83,7 @@ impl TTVEmoteData {
         self.template = templates
             .get("small")
             .unwrap()
-            .as_string()
+            .as_str()
             .unwrap()
             .to_owned();
         self.sub_emotes = obj.get("channels").cloned();
@@ -123,7 +122,7 @@ impl TTVEmoteData {
             for ref emote in emotes.iter() {
                 let object = emote.as_object().unwrap();
 
-                let name = object.get("code").unwrap().as_string().unwrap();
+                let name = object.get("code").unwrap().as_str().unwrap();
                 let id = object.get("image_id").unwrap().as_u64().unwrap();
 
                 self.data.push((name.to_owned(), id.to_string()));
@@ -155,7 +154,7 @@ impl BTTVEmoteData {
 
         self.template = obj.get("urlTemplate")
             .unwrap()
-            .as_string()
+            .as_str()
             .unwrap()
             .to_owned()
             .replace("{{image}}", "1x");
@@ -167,9 +166,9 @@ impl BTTVEmoteData {
 
             let object = emote.as_object().unwrap();
 
-            let name = object.get("code").unwrap().as_string().unwrap();
-            let id = object.get("id").unwrap().as_string().unwrap();
-            let img_type = object.get("imageType").unwrap().as_string().unwrap();
+            let name = object.get("code").unwrap().as_str().unwrap();
+            let id = object.get("id").unwrap().as_str().unwrap();
+            let img_type = object.get("imageType").unwrap().as_str().unwrap();
 
             match img_type {
                 "png" => self.data.push((name.to_owned(), id.to_string())),
@@ -191,7 +190,7 @@ impl BTTVEmoteData {
 
         self.template = obj.get("urlTemplate")
             .unwrap()
-            .as_string()
+            .as_str()
             .unwrap()
             .to_owned()
             .replace("{{image}}", "1x");
@@ -202,9 +201,9 @@ impl BTTVEmoteData {
         for ref emote in emotes.iter() {
             let object = emote.as_object().unwrap();
 
-            let name = object.get("code").unwrap().as_string().unwrap();
-            let id = object.get("id").unwrap().as_string().unwrap();
-            let img_type = object.get("imageType").unwrap().as_string().unwrap();
+            let name = object.get("code").unwrap().as_str().unwrap();
+            let id = object.get("id").unwrap().as_str().unwrap();
+            let img_type = object.get("imageType").unwrap().as_str().unwrap();
 
             match img_type {
                 "png" => self.data.push((name.to_owned(), id.to_string())),
@@ -293,7 +292,7 @@ impl Config {
     }
 }
 
-fn download_json(url: &str) -> Result<BTreeMap<String, Json>, String> {
+fn download_json(url: &str) -> Result<Value, String> {
 
     let ssl = NativeTlsClient::new().unwrap();
     let connector = HttpsConnector::new(ssl);
@@ -313,22 +312,21 @@ fn download_json(url: &str) -> Result<BTreeMap<String, Json>, String> {
         return Err(format!("Response from {} was empty", url));
     }
 
-    let data = Json::from_str(&s).unwrap();
-    let obj = data.as_object().unwrap();
+    let data: Value = serde_json::from_str(&s).unwrap();
 
-    match obj.get("status") {
+    match data.get("status") {
         Some(v) => {
             match v.as_u64().unwrap() {
-                200 => return Ok(obj.clone()),
+                200 => return Ok(data.clone()),
                 _ => {
-                    Err(obj.get("message")
+                    Err(data.get("message")
                             .unwrap()
-                            .as_string()
+                            .as_str()
                             .unwrap()
                             .to_owned())
                 }
             }
         }
-        None => return Ok(obj.clone()),
+        None => return Ok(data.clone()),
     }
 }

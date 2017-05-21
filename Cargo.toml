@@ -5,6 +5,6 @@ authors = ["Jokler <jokler.contact@gmail.com>"]
 
 [dependencies]
 hyper = "0.10"
-rustc-serialize = "0.3"
 hyper-native-tls = "0.2.2"
+serde_json = "1.0"
 pbr = "1.0.0-alpha.3"
