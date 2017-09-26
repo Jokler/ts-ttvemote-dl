@@ -1,5 +1,3 @@
-extern crate hyper;
-extern crate hyper_native_tls;
 extern crate serde_json;
 
 use std::io::*;
@@ -274,7 +272,7 @@ impl Config {
             println!("{}", e);
         }
 
-        for channel in self.ttv_channels.clone() {
+        for channel in &self.ttv_channels {
             if let Err(e) = writeln!(cfgfile, "TTV-Channel:{}", channel) {
                 println!("{}", e);
             }
@@ -284,7 +282,7 @@ impl Config {
             println!("{}", e);
         }
 
-        for channel in self.bttv_channels.clone() {
+        for channel in &self.bttv_channels {
             if let Err(e) = writeln!(cfgfile, "BTTV-Channel:{}", channel) {
                 println!("{}", e);
             }
